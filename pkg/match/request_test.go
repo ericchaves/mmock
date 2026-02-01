@@ -658,4 +658,17 @@ func TestMatchBodySniffing(t *testing.T) {
 	if b, err := mm.Match(&reqString, &mString, true); !b {
 		t.Errorf("Expected fallback string match to work. Err: %v", err)
 	}
+
+	// Scenario 5: application/octet-stream with JSON content (sniffing extension)
+	reqOctet := mock.Request{}
+	reqOctet.Headers = make(mock.Values)
+	reqOctet.Headers["Content-Type"] = []string{"application/octet-stream"}
+	reqOctet.Body = "{\"foo\":\"bar\"}"
+
+	mOctet := mock.Definition{}
+	mOctet.Request.Body = "{\"foo\" : \"bar\"}" // Note the space to ensure JSON comparison
+
+	if b, err := mm.Match(&reqOctet, &mOctet, true); !b {
+		t.Errorf("Expected match for sniffing with application/octet-stream. Err: %v", err)
+	}
 }
