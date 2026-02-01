@@ -148,6 +148,30 @@ func TestGetBodyParam(t *testing.T) {
 	}
 }
 
+func TestGetBodyParamWithoutContentType(t *testing.T) {
+	req := mock.Request{}
+	req.Headers = make(mock.Values)
+	// No Content-Type header
+	req.Body = `
+{
+  "name": "john",
+  "age": 30
+}
+`
+	res := mock.Response{}
+	res.Body = `{"name": "{{request.body.name}}", "age": {{request.body.age}}}`
+
+	expected := `{"name": "john", "age": 30}`
+
+	mock := mock.Definition{Request: req, Response: res}
+	varsProcessor := getProcessor()
+	varsProcessor.Eval(&req, &mock)
+
+	if mock.Response.Body != expected {
+		t.Errorf("Failed to resolve body vars without content-type. Got: %s, Expected: %s", mock.Response.Body, expected)
+	}
+}
+
 func TestURI(t *testing.T) {
 	const MOCK_URI = "Test_URI.yml"
 	const MOCK_HEADER_NAME = "x-test-uri"

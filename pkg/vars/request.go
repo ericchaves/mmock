@@ -170,15 +170,25 @@ func (rp Request) getHeaderParam(name string) (string, bool) {
 
 func (rp Request) getBodyParam(name string) (string, bool) {
 	contentType, found := rp.Request.Headers["Content-Type"]
-	if !found {
-		return "", false
-	}
-	if strings.HasPrefix(contentType[0], "application/x-www-form-urlencoded") {
-		return rp.getUrlEncodedFormBodyParam(name)
-	} else if strings.HasPrefix(contentType[0], "application/xml") || strings.HasPrefix(contentType[0], "text/xml") {
-		return rp.getXmlBodyParam(rp.Request.Body, name)
-	} else if strings.HasPrefix(contentType[0], "application/") && strings.HasSuffix(contentType[0], "json") {
-		return rp.getJsonBodyParam(rp.Request.Body, name)
+	if found {
+		if strings.HasPrefix(contentType[0], "application/x-www-form-urlencoded") {
+			return rp.getUrlEncodedFormBodyParam(name)
+		} else if strings.HasPrefix(contentType[0], "application/xml") || strings.HasPrefix(contentType[0], "text/xml") {
+			return rp.getXmlBodyParam(rp.Request.Body, name)
+		} else if strings.HasPrefix(contentType[0], "application/") && strings.HasSuffix(contentType[0], "json") {
+			return rp.getJsonBodyParam(rp.Request.Body, name)
+		}
+	} else {
+		// Content sniffing
+		trimmedBody := strings.TrimLeft(rp.Request.Body, " \t\r\n")
+		if len(trimmedBody) > 0 {
+			firstChar := trimmedBody[0]
+			if firstChar == '{' || firstChar == '[' {
+				return rp.getJsonBodyParam(rp.Request.Body, name)
+			} else if firstChar == '<' {
+				return rp.getXmlBodyParam(rp.Request.Body, name)
+			}
+		}
 	}
 
 	return "", false
