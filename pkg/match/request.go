@@ -237,6 +237,21 @@ func (mm Request) bodyMatch(mockReq mock.Request, req *mock.Request) bool {
 		if comparable, ok := mm.comparator.Compare(value[0], mockReq.Body, req.Body); comparable {
 			return ok
 		}
+	} else {
+		// Content sniffing
+		trimmedBody := strings.TrimLeft(req.Body, " \t\r\n")
+		if len(trimmedBody) > 0 {
+			firstChar := trimmedBody[0]
+			if firstChar == '{' || firstChar == '[' {
+				if comparable, ok := mm.comparator.Compare("application/json", mockReq.Body, trimmedBody); comparable {
+					return ok
+				}
+			} else if firstChar == '<' {
+				if comparable, ok := mm.comparator.Compare("application/xml", mockReq.Body, trimmedBody); comparable {
+					return ok
+				}
+			}
+		}
 	}
 
 	return false
